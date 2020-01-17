@@ -1,0 +1,15 @@
+[root@spark 0]# ps -ef|grep driver-20200115111829-0005
+hadoop     497 17684  1 Jan15 ?        00:28:27 /home/hadoop/jdk1.8.0_101/bin/java -cp /home/hadoop/spark-2.0.2-bin-hadoop2.6/conf/:/home/hadoop/spark-2.0.2-bin-hadoop2.6/jars/* -Xmx2048M -Dspark.kryoserializer.buffer.max=128 -Dspark.driver.memory=2G -Dspark.jars=file:/home/workspace/AnalyzeServer-Bigdata.jar -Dspark.submit.deployMode=cluster -Dspark.master=spark://spark:7077 -Dspark.speculation=true -Dspark.app.name=com.bluedon.kafka.OverAllSecurityDataServer -Dspark.rpc.askTimeout=10 -Dspark.cores.max=2 -Dspark.driver.supervise=true -Dspark.executor.cores=2 -Dspark.executor.memory=4G -Dspark.default.parallelism=50 org.apache.spark.deploy.worker.DriverWrapper spark://Worker@192.168.10.23:45806 /home/hadoop/spark-2.0.2-bin-hadoop2.6/work/driver-20200115111829-0005/AnalyzeServer-Bigdata.jar com.bluedon.kafka.OverAllSecurityDataServer
+root     20000  3110  0 09:28 pts/0    00:00:00 grep --color=auto driver-20200115111829-0005
+[root@spark 0]# ps -ef|grep driver-20200115111829-0005|awk '{print $2}'
+497
+20000
+[root@spark 0]# ps -ef|grep driver-20200115111829-0005|awk 'NR==1{print $2}'
+497
+
+
+
+awk '{print $2}'    //每个进程第二个值,默认使用空格作为分隔符
+awk 'NR==1{print $2}'   //第一个进程第二个值
+
+由于通过管道把PID传给KILL -9无法生效。因此需要使用 ps -ef|grep driver-20200115111829-0005|awk '{print $2}'
