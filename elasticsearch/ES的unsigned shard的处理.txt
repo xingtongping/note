@@ -23,6 +23,7 @@ curl -XPUT "http://localhost:9200/_settings" -d' { "number_of_replicas" : 0 } '
 方案三：allocate重新分配分片。
 如果方案二仍然未解决，可以考虑重新分配分片。
 
+
 可能的原因：
 
 1）节点在重新启动时可能遇到问题。正常情况下，当一个节点恢复与群集的连接时，它会将有关其分片的信息转发给主节点，然后主节点将这分片从“未分配”转换为“已分配/已启动”。
@@ -59,3 +60,6 @@ ES2.X及早期版本，将 allocate_replica改为 allocate，其他不变。
 步骤1：定位 UNASSIGNED 的节点和分片
 curl -s 'localhost:9200/_cat/shards' | fgrep UNASSIGNED
 步骤2：通过 allocate_replica 将 UNASSIGNED的分片重新分配。
+
+
+curl -XPOST es:9200/_cluster/reroute' -d '{     "commands" : [  {           "allocate" : {               "index" : "syslog_20200116", "shard" : 0, "node" : "es"           }         }     ] }' 
