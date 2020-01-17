@@ -1,0 +1,3 @@
+find /var/log/suricata/http/20200117/15 -name *10.53.185.9_80* -type f | xargs grep \<title | grep 公安
+
+查找/var/log/suricata/http/20200117/15下，文件名包含为10.53.185.9_80内容包含<title和公安
