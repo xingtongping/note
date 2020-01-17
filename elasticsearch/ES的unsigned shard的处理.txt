@@ -1,0 +1,61 @@
+解决方案
+
+方案一：极端情况——这个分片数据已经不可用，直接删除该分片。
+ES中没有直接删除分片的接口，除非整个节点数据已不再使用，删除节点。
+curl -XDELETE 'localhost:9200/index_name/'
+
+
+方案二：集群中节点数量>=集群中所有索引的最大副本数量 +１.。
+N> = R + 1
+其中：
+N——集群中节点的数目；
+R——集群中所有索引的最大副本数目。
+知识点：当节点加入和离开集群时，主节点会自动重新分配分片，以确保分片的多个副本不会分配给同一个节点。换句话说，主节点不会将主分片分配给与其副本相同的节点，也不会将同一分片的两个副本分配给同一个节点。
+如果没有足够的节点相应地分配分片，则分片可能会处于未分配状态。
+由于我的集群就一个节点，即Ｎ＝１；所以Ｒ＝０，才能满足公式。
+
+问题就转嫁为：
+１）添加节点处理，即Ｎ增大；
+２）删除副本分片，即R置为0。
+R置为0的方式，可以通过如下命令行实现：
+curl -XPUT "http://localhost:9200/_settings" -d' { "number_of_replicas" : 0 } '
+
+方案三：allocate重新分配分片。
+如果方案二仍然未解决，可以考虑重新分配分片。
+
+可能的原因：
+
+1）节点在重新启动时可能遇到问题。正常情况下，当一个节点恢复与群集的连接时，它会将有关其分片的信息转发给主节点，然后主节点将这分片从“未分配”转换为“已分配/已启动”。
+
+2）当由于某种原因（例如节点的存储已被损坏）导致该进程失败时，分片可能保持未分配状态。
+
+在这种情况下，您必须决定如何继续：尝试让原始节点恢复并重新加入集群（并且不要强制分配主分片）；
+
+或者强制使用Reroute API分配分片并重新索引缺少的数据原始数据源或备份。
+如果您决定分配未分配的主分片，请确保将“allow_primary”：“true”标志添加到请求中。
+
+ES5.X使用脚本如下：
+
+NODE="YOUR NODE NAME"
+IFS=$'\n'
+for line in $(curl -s 'localhost:9200/_cat/shards' | fgrep UNASSIGNED); do
+  INDEX=$(echo $line | (awk '{print $1}'))
+  SHARD=$(echo $line | (awk '{print $2}'))
+  curl -XPOST 'localhost:9200/_cluster/reroute' -d '{
+     "commands": [
+        {
+            " allocate_replica ": {
+                "index": "'$INDEX'",
+                "shard": '$SHARD',
+                "node": "'$NODE'",
+                "allow_primary": true
+          }
+        }
+    ]
+  }'
+done
+ES2.X及早期版本，将 allocate_replica改为 allocate，其他不变。
+脚本解读：
+步骤1：定位 UNASSIGNED 的节点和分片
+curl -s 'localhost:9200/_cat/shards' | fgrep UNASSIGNED
+步骤2：通过 allocate_replica 将 UNASSIGNED的分片重新分配。
