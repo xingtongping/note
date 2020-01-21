@@ -1,0 +1,84 @@
+公司和客户环境一样，程序一样，flume监听目录文件传送到kafka，我们上传测试文件到该目录，但是客户环境读了文件后，虽然文件被删了，但是数据没有正常传送到kafka
+
+
+
+配置文件如下：
+#example.conf: a single-node flume configuration
+
+#####################  agent  ############################
+a1.sources = r1 
+a1.sinks = k1
+a1.channels = c1
+
+
+#####################  sources  ############################
+
+a1.sources.r1.type = spooldir                 
+#监控的目录
+#a1.sources.r1.spoolDir = /var/flume/testdis/
+a1.sources.r1.spoolDir = /var/log/suricata/http/20200121/14
+#a1.sources.r1.inputCharset=GBK 
+a1.sources.r1.inputCharset=latin1 
+a1.sources.r1.deserializer.outputCharset=latin1 
+a1.sources.r1.basenameHeader = true
+# 在header中包含文件名的绝对路径
+a1.sources.r1.fileHeader = true
+#读取完毕之后，删除文件
+a1.sources.r1.deletePolicy = immediate
+#是否递归搜索
+a1.sources.r1.recursiveDirectorySearch = true
+#随机读取文件
+a1.sources.r1.consumeOrder = random
+
+#####################  channels  ############################
+a1.channels.c1.type = memory
+a1.channels.c1.capacity = 100000
+a1.channels.c1.transactionCapacity = 100
+
+
+##################### Bind the source to the channel ##############
+a1.sources.r1.channels = c1
+
+
+## source 拦截器
+#a1.sources.r1.interceptors = i2
+a1.sources.r1.interceptors = i1 i2
+#a1.sources.r1.interceptors = i1
+###保留指定的字符串
+a1.sources.r1.interceptors.i1.type =regex_filter  
+#a1.sources.r1.interceptors.i1.regex =^.*title.*$  
+a1.sources.r1.interceptors.i1.regex =.*\<title.*
+a1.sources.r1.interceptors.i1.excludeEvents =false  
+###对数据进行格式化
+a1.sources.r1.interceptors.i2.type = com.bluedon.flume.FlumeInterCeptorSensitiveWords$Builder
+
+
+
+###################### sinks ###########################
+a1.sinks.k1.type= org.apache.flume.sink.kafka.KafkaSink
+a1.sinks.k1.brokerList=kafka:9092
+a1.sinks.k1.topic=sensitive-word-topic
+#a1.sinks.k1.topic=test-20190905
+a1.sinks.k1.serializer.class=kafka.serializer.StringEncoder
+
+
+###################### Bind the sink to the channel ###########################
+a1.sinks.k1.channel = c1
+
+
+
+
+
+客户那边数据还没进入到flume第二个拦截器，所以可能在第一个拦截器就被过滤掉了
+经过多次测试，发现问题在这里
+#a1.sources.r1.interceptors.i1.regex =^.*title.*$  
+a1.sources.r1.interceptors.i1.regex =.*\<title.*
+
+但是奇怪就在，为什么公司环境可以，但是客户环境不行呢？猜测可能jdk版本有差异，导致正则解析结果不一样？
+
+另外一个问题，敏感词匹配没匹配上，后来分享分词结果问题
+日照市网络警察支队   分词结果：日照市、网络警察、支队
+所以不会出现我们预期结果警察这个敏感词。
+
+
+  
