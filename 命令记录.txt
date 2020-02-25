@@ -1,0 +1,13 @@
+Linux查看某个端口是否启动
+netstat -an | grep 16010
+
+linux 清空catalina.out日志 不需要重启tomcat
+echo "" > catalina.out
+
+
+cat -n catalina.out|grep 'error'  
+cat -n catalina.out|tail -n +56305|head -n +15 
+
+
+下载ftp目录命令：
+wget -r -nH -P /data/ftp/yx ftp://10.96.2.161/cb/070000 --ftp-user=ftp --ftp-password=yxftp123
