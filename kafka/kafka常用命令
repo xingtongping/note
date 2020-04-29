@@ -1,0 +1,17 @@
+启动
+kafka-server-start.sh -daemon /home/spark/kafka_2.11-0.10.2.0/config/server.properties
+生产者
+kafka-console-producer.sh --broker-list spark03:9092 --topic syslog --producer.config /home/spark/kafka_2.11-0.10.2.0/config/producer.properties
+消费者
+kafka-console-consumer.sh --bootstrap-server spark:9092 --topic monitorwebsite-topic --consumer.config /home/spark/kafka_2.11-0.10.2.0/config/consumer.properties
+创建topic
+kafka-topics.sh --create --zookeeper spark01:2181 --replication-factor 3 --partitions 3 --topic syslog
+kafka-topics.sh --create --zookeeper zk-0.zk-hs.default.svc.cluster.local:2181 --replication-factor 1 --partitions 1 --topic syslog
+详情
+kafka-topics.sh --topic syslog --describe --zookeeper spark:2181
+消费者组详情
+kafka-consumer-groups.sh --describe --bootstrap-server localhost:9092 --group logstash-ids
+列表
+kafka-topics.sh --list --zookeeper spark:2181
+消费者组列表
+kafka-consumer-groups.sh --bootstrap-server spark:9092 --list
