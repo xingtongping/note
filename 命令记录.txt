@@ -11,3 +11,9 @@ cat -n catalina.out|tail -n +56305|head -n +15
 
 下载ftp目录命令：
 wget -r -nH -P /data/ftp/yx ftp://10.96.2.161/cb/070000 --ftp-user=ftp --ftp-password=yxftp123
+
+
+抓包：
+tcpdump -i any host 192.168.10.24 and port 514
+发：
+echo "hello"|nc -u spark03 8787
