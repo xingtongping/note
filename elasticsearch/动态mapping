@@ -1,0 +1,34 @@
+PUT threat_index
+{
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "long_as_text": {
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "text"
+          }
+        }
+      },
+            {
+        "double_as_text": {
+          "match_mapping_type": "double",
+          "mapping": {
+            "type": "text"
+          }
+        }
+      },
+             {
+        "boolean_as_text": {
+          "match_mapping_type": "boolean",
+          "mapping": {
+            "type": "text"
+          }
+        }
+      }
+    ]
+  },
+  "settings": {
+    "index.mapping.total_fields.limit": 5000
+  }
+}
