@@ -4,8 +4,8 @@ https://download.csdn.net/download/m0_37911384/12373692
 
 调用：
  JSONObject jsonObject = new JSONObject();
- jsonObject.put("sourceip", "1.1.1.1");
- jsonObject.put("destip", "172.16.110.32");
+ jsonObject.put("sourceip", "51.51.54.54");
+ jsonObject.put("destip", "37.51.54.54");
  IPInfoUtils.loadIpFile();
  IPInfoUtils.addAreaDesc(jsonObject, "src", "sourceip");
  IPInfoUtils.addAreaDesc(jsonObject, "dst", "destip");
