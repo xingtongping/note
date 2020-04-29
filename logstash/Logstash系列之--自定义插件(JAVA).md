@@ -1,5 +1,9 @@
 ### Logstash系列之--自定义插件(JAVA)
 
+图片失效去博客看文章：
+https://blog.csdn.net/m0_37911384/article/details/105220250
+
+
 ##### 说明
 
 官方文档：https://www.elastic.co/guide/en/logstash/7.2/java-filter-plugin.html
@@ -132,3 +136,4 @@ bin/logstash -f agent.conf
 2、没有使用官网提供的命令gradlew.bat assemble进行build，使用了自己本地的gradle assemble，导致插件找不到
 
 ![image-20200331125458407](C:\Users\jiang\AppData\Roaming\Typora\typora-user-images\image-20200331125458407.png)
+
