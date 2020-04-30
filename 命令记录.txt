@@ -17,3 +17,6 @@ wget -r -nH -P /data/ftp/yx ftp://10.96.2.161/cb/070000 --ftp-user=ftp --ftp-pas
 tcpdump -i any host 192.168.10.24 and port 514
 发：
 echo "hello"|nc -u spark03 8787
+
+更新jar文件：
+jar -uvf MonitorWebsiteServer.jar com/bluedon/dataMatch/MonitorWebsiteProcess*
