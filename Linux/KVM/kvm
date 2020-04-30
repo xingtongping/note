@@ -34,5 +34,3 @@ qemu-img create -f qcow2 es01.img 1024G
 qemu-img convert -O qcow2 原始镜像.img   新镜像.img
 
 
-# cron clean netflow
-00 01 * * * /usr/bin/curl  -XDELETE vmcorestor1:9200/netflow_$(date +"\%Y\%m\%d" -d "-1day") >/dev/null  2>&1 
