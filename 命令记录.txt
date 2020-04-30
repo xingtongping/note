@@ -20,3 +20,8 @@ echo "hello"|nc -u spark03 8787
 
 更新jar文件：
 jar -uvf MonitorWebsiteServer.jar com/bluedon/dataMatch/MonitorWebsiteProcess*
+
+
+
+# cron clean netflow
+00 01 * * * /usr/bin/curl  -XDELETE vmcorestor1:9200/netflow_$(date +"\%Y\%m\%d" -d "-1day") >/dev/null  2>&1 
