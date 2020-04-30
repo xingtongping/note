@@ -1,0 +1,86 @@
+nginx安装：菜鸟教程
+
+正向代理和反向代理
+正向代理：当客户端无法访问外部资源的时候（由于诸如墙这样的原因），可以通过一个正向代理去间接地访问，所以客户端需要配置代理服务器的ip。
+反向代理：客户端是无感知代理的存在，以代理服务器来接受internet上的连接请求，然后将请求转发给内部网络上的服务器，并将从服务器上得到的结果返回给internet上请求连接的客户端。
+
+
+1、静态服务资源
+server {
+listen 80;
+server_name localhost;
+location /www/ {
+root /data/;
+index index.html index.htm;
+}
+location /image/ {
+root /data/;
+autoindex on;
+}
+}
+
+
+http://localhost/www/index.html  即 访问服务器根目录data下的/www/index.html
+（因为/data/，若root data则认为nginx相对目录）  (看location里面root配置)   (看url)
+
+
+
+2、反向代理
+server {
+    listen 80;
+    location / {
+        proxy_pass http://192.168.20.1:8080; # 应用服务器HTTP地址
+    }
+}
+
+
+3、负载均衡
+默认轮训策略，有ip_hash和weight（机器好坏）
+
+ upstream myapp {
+    ip_hash; # 根据客户端IP地址Hash值将请求分配给固定的一个服务器处理
+    server 192.168.20.1:8080;
+    server 192.168.20.2:8080;
+}
+server {
+    listen 80;
+    location / {
+        proxy_pass http://myapp;
+    }
+}
+
+
+4、虚拟主机   一个主机提供多个web服务
+  server {
+    listen 80 default_server;
+    server_name _;
+    return 444; # 过滤其他域名的请求，返回444状态码
+}
+server {
+    listen 80;
+    server_name www.jim.com; # www.jim.com域名
+    location / {
+        proxy_pass http://localhost:8080; # 对应端口号8080
+    }
+}
+server {
+    listen 80;
+    server_name www.tim.com; # www.tim.com域名
+    location / {
+        proxy_pass http://localhost:8081; # 对应端口号8081
+    }
+}
+
+
+
+配置负载均衡比较简单,但是最关键的一个问题是怎么实现多台服务器之间session的共享
+下面有几种方法(以下内容来源于网络,第四种方法没有实践.)
+1). 不使用session，换作cookie
+　　能把session改成cookie，就能避开session的一些弊端，在从前看的一本J2EE的书上，也指明在集群系统中不能用session，否则惹出祸端来就不好办。如果系统不复杂，就优先考虑能否将session去掉，改动起来非常麻烦的话，再用下面的办法。
+2). 应用服务器自行实现共享
+　　php可以用数据库或memcached来保存session，从而在php本身建立了一个session集群，用这样的方式可以令 session保证稳定，即使某个节点有故障，session也不会丢失，适用于较为严格但请求量不高的场合。但是它的效率是不会很高的，不适用于对效率要求高的场合。
+以上两个办法都跟nginx没什么关系，下面来说说用nginx该如何处理：
+3).  ip_hash
+　　nginx中的ip_hash技术能够将某个ip的请求定向到同一台后端，这样一来这个ip下的某个客户端和某个后端就能建立起稳固的session，ip_hash是在upstream配置中定义的：
+
+ip_hash有缺陷，很多场景下不适用
