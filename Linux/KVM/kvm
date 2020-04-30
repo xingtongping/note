@@ -1,0 +1,38 @@
+1、安装相关软件命令
+yum install -y libvirt-client
+
+yum install -y virt-manager
+
+yum -y install openssl-devel
+
+yum install -y virt-install
+
+yum install qemu-kvm libvirt libvirt-python libguestfs-tools virt-install -y
+
+systemctl start libvirtd
+
+
+磁盘扩展：
+qemu-img resize Centos7-1.img +1024G  然后重启
+fdisk -l查看 
+fdisk  /dev/sda          n      t  
+partprobe  /dev/sda  重读分区表
+pvcreate /dev/sda5    
+vgs
+vgextend centos /dev/sda5    
+lvcreate -L 100G -n lvs_home centos              lvextend -L +1298G /dev/mapper/centos-lvs_home
+mkfs.ext4 /dev/centos/lvs_home 
+mount /dev/centos/lvs_home /home
+
+
+镜像肥胖：
+dd if=/dev/zero of=~/temp
+rm temp
+shutdown  now
+
+qemu-img create -f qcow2 es01.img 1024G
+qemu-img convert -O qcow2 原始镜像.img   新镜像.img
+
+
+# cron clean netflow
+00 01 * * * /usr/bin/curl  -XDELETE vmcorestor1:9200/netflow_$(date +"\%Y\%m\%d" -d "-1day") >/dev/null  2>&1 
