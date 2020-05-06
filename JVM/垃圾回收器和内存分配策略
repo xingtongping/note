@@ -16,3 +16,36 @@ how
 
 举例：创建WeakReference user = new WeakReference（new User);调用GC， user = null，因为每次GC都会回收弱引用
 软引用和弱引用用在内存资源紧张的情况下
+
+ 
+
+垃圾回收算法：
+1、标记清除：出现碎片
+2、复制算法：分两半，一段时间移动右半段，然后清空左半段，就不会出现碎片情况，但是浪费空间
+3、标记-整理算法
+
+为什么分年轻代，老年代：因为对象生命周期不同，90%朝生夕死。
+新生代使用复制算法：因为存活对象不多，移动的对象不多，而且规整
+老年代使用标记或者标记整理
+
+minor GC 和 full GC
+
+
+
+垃圾回收器：Serial 、 Parallel Old 、  ParNew   、 Parallel Scavenge 、  CMS   、 Serial Old  、   G1 
+
+Serial、Parallel Old  单线程、最古老、独占式（ stop the world）、成熟、单CPU   
+-XX：+UseSerialGC 新生和老年都用串行回收器   
+-XX：+UserParNewGC 新生代用ParNew，老年代用Serial Old
+-XX：+UserParallelGC 新生代使用ParallelGC，老年代使用Serial Old
+
+ParNew和Serial基本没区别，唯一区别就是多线程，关注停顿时间
+
+Parallel Scavenge/Praallel Old关注吞吐量
+
+停顿时间短适合用于交互程序，提高用户体验
+关注吞吐量，后台计算任务
+-XX：MaxGCPauseMills  控制最大停顿时间
+-XX：GCTimeRatio 吞吐量的倒数   假设=19 允许的GC时间 1/(1+19）=5%
++XX：UseAdaptiveSizePolicy  自适应调整新生代大小，老年代大小等
+
