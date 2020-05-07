@@ -1,0 +1,40 @@
+1、Lambda 表达式
+Lambda 允许把函数作为一个方法的参数（函数作为参数传递进方法中）。
+
+2、方法引用
+方法引用使用一对冒号 :: 
+import java.util.List;
+import java.util.ArrayList;
+ 
+public class Java8Tester {
+   public static void main(String args[]){
+      List names = new ArrayList();
+        
+      names.add("Google");
+      names.add("Runoob");
+      names.add("Taobao");
+      names.add("Baidu");
+      names.add("Sina");
+        
+      names.forEach(System.out::println);
+   }
+}
+
+3、函数式接口
+函数式接口(Functional Interface)就是一个有且仅有一个抽象方法，但是可以有多个非抽象方法的接口。
+函数式接口可以被隐式转换为 lambda 表达式。
+
+4、默认方法
+简单说，默认方法就是接口可以有实现方法，而且不需要实现类去实现其方法。
+
+5、Stream
+流在管道中传输， 并且可以在管道的节点上进行处理， 比如筛选， 排序，聚合等。
+
+6、Optional 类
+Optional 类是一个可以为null的容器对象。如果值存在则isPresent()方法会返回true，调用get()方法会返回该对象。
+
+
+7、新的日期时间 API
+Java 8 在 java.time 包下提供了很多新的 API。以下为两个比较重要的 API：
+Local(本地) − 简化了日期时间的处理，没有时区的问题。
+Zoned(时区) − 通过制定的时区处理日期时间。
