@@ -50,8 +50,9 @@ Parallel Scavenge/Praallel Old关注吞吐量
 +XX：UseAdaptiveSizePolicy  自适应调整新生代大小，老年代大小等
 
 
-CMD垃圾收集器：
-标记清除算法
+CMS垃圾收集器：
+是一种以获取最短回收停顿时间为目的的收集器，视响应速度，希望停顿时间短。
+标记清除算法，导致碎片
 和用户程序并发执行，需要给用户线程留下运行的内存空间
 XX：CMSInitialOccupyFraction 当老年代超过这个值的时候进行垃圾回收，当老年代增长不快，可提高该参数，提高收集效率，减少收集次数
 其他参数
@@ -63,6 +64,13 @@ G1垃圾收集器
 并行和并发,并行：多线程  并发：用户线程和垃圾回收同时进行
 分代收集
 标记整理和复制算法
+
+如何选择垃圾收集器
+1、单CPU或者小内存，单机程序 — -XX:+UseSerialGC
+2、多CPU，需要大吞吐量，如后台计算型应用
+-XX:+UseParallelGC + -XX:+UseParallelOldGC
+3、多CPU，追求低停顿时间，快速响应如互联网应用
+-XX:+UseParNewGC + -XX:+UseConcMarkSweepGC
 
 
 
@@ -79,5 +87,5 @@ G1垃圾收集器
 
 Serial：单线程STW，复制算法
 ParNew：多线程并行STW，复制算法
-Parallel Scavange：多线程并行STW，吞吐量优先，复制算法
+Parallel Scavange：多线程并行STW，复制算法，可控制吞吐量,多用于后台计算而不需要太多交互的任务。jdk1.8默认新生代收集器，老年代ParallelOld
 G1：多线程并发，可以精确控制STW时间，整理算法
