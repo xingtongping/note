@@ -1,0 +1,40 @@
+1.什么是指令重排
+程序指令的执行顺序有可能和代码的顺序不一致，这个过程就称之为指令重排。
+
+2.指令重排的作用
+JVM能根据处理器的特性，充分利用多级缓存，多核等进行适当的指令重排序，使程序在保证业务运行的同时，充分利用CPU的资源，发挥最大的性能！
+由于指令重排的特性，为了保证程序在多线程的条件下运行结果能够与单一线程下一致，引入了Happens-Before规则。也就是说，Happens-Before规则主要是用来确保并发情况下数据的正确性。
+
+3.Happens-Before的含义
+如果动作B要看到动作A的执行结果，无论A/B是否在同一个线程中，那么A/B必须满足happens-before规则。
+
+4. happens-before规则
+1）如果ActionA和ActionB属于同一个线程，那么就说明ActionA happens-before ActionB。
+2）如果ActionA是unlock操作，而ActionB是lock操作，那么ActionA happens-before ActionB。
+3）如果A是对volatile变量的写操作，ActionB是对同一个变量的读操作，那么ActionA happens-before ActionB。
+4）线程的启动Action happens-before 该线程上的其他动作。
+5）线程中任何Action都 happens-before 任何其他线程检测到该线程已经结束、Thread.join调用成功返回，Thread.isAlive返回false。
+6）一个线程调用另一个线程的interrupt一定发生在另一个线程中断之前。
+7）一个对象的构造函数结束一定发生在兑现finalizer之前。
+8）ActionA发生在ActionB之前，ActionB发生在ActionC之前，则ActionA一定发生在ActionC之前。
+ActionA happends-before ActionB，记作hb（ActionA，ActionB）。
+
+5. JMMA（Java Memory Model Action）
+Java模型动作，一个Action包含，变量读取、变量写、监视器枷锁、释放锁、线程启动（start）、线程等待（join）。
+
+6. happens-before应用的例子
+一个简单的例子来描述下happens-before原则：
+private int i = 0;
+public void write(int j ){
+    i = j;
+}
+public int read(){
+    return i;
+}
+我们约定线程A执行write()，线程B执行read()，且线程A优先于线程B执行，那么线程B获得结果是什么？；我们就这段简单的代码一次分析happens-before的规则（规则5、6、7、8 + 推导的6条可以忽略，因为他们和这段代码毫无关系）：
+由于两个方法是由不同的线程调用，所以肯定不满足程序次序规则；
+两个方法都没有使用锁，所以不满足锁定规则；
+变量i不是用volatile修饰的，所以volatile变量规则不满足；
+传递规则肯定不满足；
+所以我们无法通过happens-before原则推导出线程A happens-before线程B，虽然可以确认在时间上线程A优先于线程B指定，但是就是无法确认线程B获得的结果是什么，所以这段代码不是线程安全的。那么怎么修复这段代码呢？满足规则2、3任一即可。
+happen-before原则是JMM中非常重要的原则，它是判断数据是否存在竞争、线程是否安全的主要依据，保证了多线程环境下的可见性。
