@@ -89,3 +89,21 @@ Serial：单线程STW，复制算法
 ParNew：多线程并行STW，复制算法
 Parallel Scavange：多线程并行STW，复制算法，可控制吞吐量,多用于后台计算而不需要太多交互的任务。jdk1.8默认新生代收集器，老年代ParallelOld
 G1：多线程并发，可以精确控制STW时间，整理算法
+
+
+
+jps  进程状况
+
+jstat 统计信息监控
+jstat -gc 18825进程号  250查询一次  连续查20次 
+jstat -gccause 18825  250  20
+jstat -gcnew 18825  250  20
+
+jinfo  信息配置
+查看和修改虚拟机信息
+
+jmap   内存映像
+
+jstack   堆栈跟踪
+jConsole  监视与管理控制台
+VisualVM  多合一故障处理工具
