@@ -1,0 +1,2 @@
+Class本质是二进制流，8个字节为基础单位
+javap  -verbose   ...class
