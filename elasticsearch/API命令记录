@@ -1,0 +1,88 @@
+PUT _ingest/pipeline/attack_pipeline
+{
+  "description" : "describe pipeline",
+  "processors" : [
+    {
+       "set": {
+       "field": "insert_date"
+       "value": "{{_ingest.timestamp}}"
+        }
+    }
+  ]
+}
+
+PUT _template/attack_template
+{
+  "template":"http_*",
+  "settings":{
+    "default_pipeline":"attack_pipeline"
+  }
+}
+
+
+PUT _template/template_max_window
+{
+	"template":"*",
+	"settings":{"max_result_window" : "10000000"}
+}
+
+
+POST /_sql?format=json
+{
+  "query":"select storagetime from http_20200511"
+}
+
+
+curl -XPUT "http://es:9200/_template/http_template" -d '{
+    "template":"http_*",
+    "mappings":{
+        "default":{
+            "_source":{
+                "includes":[
+                    "sprovince",
+                    "srcip",
+                    "status_code",
+                    "dstport",
+                    "response_date",
+                    "content_pathtc",
+                    "request_method",
+                    "dprovince",
+                    "protocol",
+                    "content_type",
+                    "flow_id",
+                    "host",
+                    "connection",
+                    "dstip",
+                    "nodeid",
+                    "scity",
+                    "content_length",
+                    "dcity",
+                    "original_log",
+                    "response_phrase",
+                    "dlongitude",
+                    "request_url",
+                    "slongitude",
+                    "slatitude",
+                    "dlatitude",
+                    "request_date",
+                    "srcport",
+                    "content_pathts",
+                    "scountry",
+                    "dcountry",
+                    "uri"
+                ]
+            },
+            "_all":{
+                "enabled":false
+            },
+            "properties":{
+                "request_url":{
+                    "type":"string",
+                    "include_in_all":false,
+                    "index":"not_analyzed"
+                }
+            }
+        }
+    }
+}'
+
