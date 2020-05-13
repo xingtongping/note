@@ -1,2 +1,39 @@
 Class本质是二进制流，8个字节为基础单位
 javap  -verbose   ...class
+
+
+类加载机制：
+加载-验证-准备-解析-初始化-使用-卸载
+初始化：有且只有5种情况才必须对类进行初始化
+1、new、getstatic、putstatic、invokestatic     get set static变量 调用static方法
+2、对类进行反射调用
+3、初始化一个类，但是父类还有初始化的时候，先触发父类的
+4、指定一个执行main的类，主类
+5、动态语言支持
+
+
+类加载：
+1、加载二进制流
+2、把静态存储结构转化为方法区的运行时结构
+3、生成一个代表这个类的class对象
+
+准备阶段： int value = 123；
+准备：int value = 0；
+初始化：value = 123；
+
+初始化:执行类的构造器<clinit> 构造器 常量
+
+
+
+
+
+系统的类加载器:
+1、启动类加载器-bootstrap ClassLoader   java_home/lib中
+2、扩展类加载器-Extension ClassLoader   java_home/lib /ext
+3、应用程序class加载器-Application Loader   程序默认的类加载器
+
+
+双亲委派模型
+某个加载器接到加载请求，首先将加载任务委托给父类加载器，依次递归，如果父类可以完成加载，就成功返回，无法完成才自己去加载。
+一个类是否唯一，由类本身和类加载器一起决定
+如果不是双亲委派，用户定义个java.lang.Object，程序出现两个不同的Object，目的就是保证java程序稳定运行
