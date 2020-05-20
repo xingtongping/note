@@ -1,6 +1,9 @@
 Class本质是二进制流，8个字节为基础单位
 javap  -verbose   ...class
 
+相关内容博客
+https://www.cnblogs.com/buwuliao/p/10646763.html
+
 
 类加载机制：
 加载-验证-准备-解析-初始化-使用-卸载
