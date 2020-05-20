@@ -11,6 +11,12 @@ javap  -verbose   ...class
 4、指定一个执行main的类，主类
 5、动态语言支持
 
+准备：给成员变量（类变量/静态变量）赋默认值 int value = 0;
+　　　　把常量（final)等值在方法区的常量池中给准备好。
+
+解析：由符号引用变为直接（地址）引用
+比如org.simple.People类引用了org.simple.Language类，在编译时People类并不知道Language类的实际内存地址，因此只能使用符号org.simple.Language
+
 
 类加载：
 1、加载二进制流
@@ -22,6 +28,8 @@ javap  -verbose   ...class
 初始化：value = 123；
 
 初始化:执行类的构造器<clinit> 构造器 常量
+初始化过程的主要操作是执行静态代码块和初始化静态域。
+在一个类被初始化之前，它的直接父类也需要被初始化
 
 
 
@@ -29,7 +37,7 @@ javap  -verbose   ...class
 
 系统的类加载器:
 1、启动类加载器-bootstrap ClassLoader   java_home/lib中
-2、扩展类加载器-Extension ClassLoader   java_home/lib /ext
+2、扩展类加载器-Extension ClassLoader   java_home/lib /ext 或配置指定目录
 3、应用程序class加载器-Application Loader   程序默认的类加载器
 
 
