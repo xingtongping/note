@@ -25,3 +25,18 @@ jar -uvf MonitorWebsiteServer.jar com/bluedon/dataMatch/MonitorWebsiteProcess*
 
 # cron clean netflow
 00 01 * * * /usr/bin/curl  -XDELETE vmcorestor1:9200/netflow_$(date +"\%Y\%m\%d" -d "-1day") >/dev/null  2>&1 
+
+
+
+
+
+磁盘扩展：
+fdisk  /dev/sda        
+ n 创建主分区
+ t  8e 设置LVM格式
+
+partprobe  /dev/sda  重读分区表
+pvcreate /dev/sda3 创建物理卷
+vgextend centos /dev/sda3   
+lvextend -L +1500G /dev/mapper/centos-home
+xfs_growfs /dev/mapper/centos-home
