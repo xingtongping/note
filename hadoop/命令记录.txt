@@ -1,0 +1,1 @@
+spark-submit --class job.WordCount --master yarn --deploy-mode cluster --executor-memory 1G   --driver-memory 1G  --total-executor-cores 2 --executor-cores 1 /opt/module/hadoop-2.7.3/jars/bigdata-1.0-SNAPSHOT.jar
