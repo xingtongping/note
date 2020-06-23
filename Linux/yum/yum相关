@@ -1,0 +1,10 @@
+在有网络的服务器下载依赖包
+yum -y install python --downloadonly --downloaddir=/opt/module/xtp 
+
+创建repo文件
+touch /etc/yum.repos.d/localrepo.repo
+echo "[localrepo]"  >>/etc/yum.repos.d/localrepo.repo
+echo "name=Local Repository" >>/etc/yum.repos.d/localrepo.repo
+echo "baseurl=file:///var/ftp/pub/localrepo" >>/etc/yum.repos.d/localrepo.repo
+echo "gpgcheck=0" >>/etc/yum.repos.d/localrepo.repo
+echo "enabled=1"  >>/etc/yum.repos.d/localrepo.repo
