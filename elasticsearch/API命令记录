@@ -86,3 +86,8 @@ curl -XPUT "http://es:9200/_template/http_template" -d '{
     }
 }'
 
+
+curl -XPOST sfs1:9200/_cluster/reroute' -H 'Content-Type: application/json' -d '{     "commands" : [  {           "allocate" : {               "index" : "ob_database_one", "shard" : 1, "node" : "sfs2"           }         }     ] }' 
+
+curl -XGET 'http://sfshadoop3:9200/_cluster/health?pretty'
+
