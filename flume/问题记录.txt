@@ -81,4 +81,10 @@ a1.sources.r1.interceptors.i1.regex =.*\<title.*
 所以不会出现我们预期结果警察这个敏感词。
 
 
+
+/home/spark/apache-flume-1.8.0-bin/bin/flume-ng agent \
+-c /home/spark/apache-flume-1.8.0-bin/conf \
+-f /home/spark/apache-flume-1.8.0-bin/conf/example.conf \
+-n a1 -Dflume.monitoring.type=http -Dflume.monitoring.port=34546 > /home/spark/apache-flume-1.8.0-bin/logs/flume-server.log 2>&1 &
+
   
