@@ -1,0 +1,2 @@
+# cron clean netflow
+00 01 * * * /usr/bin/curl  -XDELETE vmcorestor1:9200/netflow_$(date +"\%Y\%m\%d" -d "-1day") >/dev/null  2>&1 
