@@ -34,3 +34,27 @@ qemu-img create -f qcow2 es01.img 1024G
 qemu-img convert -O qcow2 原始镜像.img   新镜像.img
 
 
+其他命令：
+qemu-img resize Centos7-1.img +1G
+qemu-img info Centos7-1.img
+
+qemu-img create -f qcow2 es01.img 1024G
+
+virt-install --name soc --hvm  --ram 8192 --vcpus 3 --disk path=/home/centos/soc.img,size=2048 --network network:default --accelerate --vnc --os-variant Centos7.0 --cdrom /home/centos/CentOS-7.5-x86_64-DVD-1804.iso -d
+virt-install --name spark --hvm  --ram 1024 --vcpus 1 --disk path=/home/centos/spark.img,size=1024 --network network:default --accelerate --vnc --os-variant Centos7.0 --cdrom /usr/local/CentOS-7.5-x86_64-DVD-1804.iso -d
+virt-install --name tomcat --hvm  --ram 1024 --vcpus 1 --disk path=/home/centos/tomcat.img,size=1024 --network network:default --accelerate --vnc --os-variant Centos7.0 --cdrom /usr/local/CentOS-7.5-x86_64-DVD-1804.iso -d
+
+
+virt-install  --name centos \
+ --ram 2048 \
+ --vcpus=2 \
+ --os-type=linux \
+ --os-variant=centos7.0 \
+ --disk path=/home/centos/es.img,,device=disk,bus=virtio \
+ --graphics none \
+ --import
+
+ERROR:
+kvm image is corrupt  can  not be opened  read/write
+解决  --修复
+qemu-img check -r all Centos7-1.img
