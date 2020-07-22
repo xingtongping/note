@@ -1,0 +1,31 @@
+Region虽然是分布式存储的最小单元，但并不是存储的最小单元
+HRegion由一个或者多个Store组成，每个store保存一个columns family
+每个Strore又由一个memStore和0至多个StoreFile组成
+StoreFile以HFile格式保存在HDFS上。
+
+
+Client
+1 包含访问hbase的接口，client维护着一些cache来加快对hbase的访问，比如regione的位置信息。
+
+
+Zookeeper
+
+1 保证任何时候，集群中只有一个master
+2 存贮所有Region的寻址入口。
+3 实时监控Region Server的状态，将Region server的上线和下线信息实时通知给Master
+4 存储Hbase的schema,包括有哪些table，每个table有哪些column family
+
+Master
+
+1 为Region server分配region
+2 负责region server的负载均衡
+3 发现失效的region server并重新分配其上的region
+4 GFS上的垃圾文件回收
+5 处理schema更新请求
+
+Region Server
+
+1 Region server维护Master分配给它的region，处理对这些region的IO请求
+2 Region server负责切分在运行过程中变得过大的region
+
+可以看到，client访问hbase上数据的过程并不需要master参与（寻址访问zookeeper和region server，数据读写访问regione server），master仅仅维护者table和region的元数据信息，负载很低。
