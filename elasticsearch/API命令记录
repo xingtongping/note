@@ -91,3 +91,10 @@ curl -XPOST sfs1:9200/_cluster/reroute' -H 'Content-Type: application/json' -d '
 
 curl -XGET 'http://sfshadoop3:9200/_cluster/health?pretty'
 
+
+curl -H "Content-Type: application/json" -XPOST "http://192.168.0.11:9200/_xpack/sql?format=txt&pretty" -d'
+{
+   "query": "select chinese_name,count(*),min(observation_date),max(observation_date) from ob_database_ebird group by chinese_name",
+    "fetch_size": 5
+}'
+
