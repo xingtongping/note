@@ -15,7 +15,7 @@ systemctl start libvirtd
 磁盘扩展：
 qemu-img resize Centos7-1.img +1024G  然后重启
 fdisk -l查看 
-fdisk  /dev/sda          n      t  
+fdisk  /dev/sda          n      t  8e
 partprobe  /dev/sda  重读分区表
 pvcreate /dev/sda5    
 vgs
@@ -23,6 +23,7 @@ vgextend centos /dev/sda5
 lvcreate -L 100G -n lvs_home centos              lvextend -L +1298G /dev/mapper/centos-lvs_home
 mkfs.ext4 /dev/centos/lvs_home 
 mount /dev/centos/lvs_home /home
+xfs_growfs /dev/centos/lvs_home
 
 
 镜像肥胖：
