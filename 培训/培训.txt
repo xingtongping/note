@@ -1,0 +1,33 @@
+一、大数据技术类型简介
+
+传输：sqoop、flume、logstash
+
+MQ：kafka  标配    解耦 削峰 异步 临时存储  
+
+计算：storm、mapReduce、spark、flink
+
+开发语言：java  scala   python  R
+
+存储：hdfs、hive、hbase、es
+
+调度：Azkaban、oozie、airflow 
+
+
+
+#### crontab：比较简单、随着job复杂度提升，协调工作和任务监督都变得麻烦
+
+
+
+
+
+#### 二、大数据整体架构介绍
+
+
+
+
+
+
+
+#### 三、具体组件的学习
+
+#### hadoop、hive、hbase、spark
