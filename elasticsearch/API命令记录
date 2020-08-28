@@ -33,6 +33,18 @@ POST /_sql?format=json
 }
 
 
+
+
+启动sql窗口：
+elasticsearch-6.8.3/bin/elasticsearch-sql-cli
+
+
+sql生成txt文件
+curl -H "Content-Type: application/json" -XPOST "http://192.168.0.11:9200/_xpack/sql?format=txt&pretty" -d'
+{
+    "query": "select state,min(observation_date),max(observation_date),count(*) from ob_database_cj group by state","fetch_size": 10000                                                                                               
+}'>cj.txt
+
 curl -XPUT "http://es:9200/_template/http_template" -d '{
     "template":"http_*",
     "mappings":{
@@ -98,3 +110,13 @@ curl -H "Content-Type: application/json" -XPOST "http://192.168.0.11:9200/_xpack
     "fetch_size": 5
 }'
 
+
+POST：根据dsl查找删除索引数据：
+/ob_database_xtp/_delete_by_query/
+chinese为null：
+{"query":{"bool":{"must_not":{"exists":{"field":"chinese_name"}}}}}
+
+
+{"query":{"match":{"data_source2.keyword":"长江调查数据"}}}
+
+{"query":{"bool":{"must_not":{"exists":{"field":"location"}}}}}
