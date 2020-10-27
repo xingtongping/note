@@ -1,0 +1,7 @@
+DELETE 
+FROM
+	tb_traveler_rank 
+WHERE
+	id NOT IN ( SELECT * FROM ( SELECT id FROM tb_traveler_rank WHERE agg_type = '2' AND rank_type = '1' ORDER BY create_time DESC LIMIT 40 ) a ) 
+	AND agg_type = '2' 
+	AND rank_type = '1'
