@@ -26,6 +26,40 @@ PUT _template/template_max_window
 	"settings":{"max_result_window" : "10000000"}
 }
 
+GET /_analyze?pretty
+{
+  "analyzer": "gama",
+  "text":"PS4手把造型悠遊卡鑰匙圈"
+}
+
+POST _reindex
+{
+      "source": {
+        "index": "user"
+      },
+      "dest": {
+        "index": "user-test"
+      }
+}
+
+GET /wish/_search
+{
+   "query": {
+     "query_string":{
+            "default_field":"commodity_name",
+            "query":"PS4*"
+       }
+   }
+}
+
+
+POST /procure/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
 
 POST /_sql?format=json
 {
