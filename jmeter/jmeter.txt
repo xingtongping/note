@@ -1,1 +1,61 @@
+1、新增采购单，删除缓存4-5s，解决：异步删缓存
+2、压测过程查询es慢       CPU问题
+3、新增许愿单    发送rabbitmq慢
+4、下架慢  发送rabbitmq
+5、查询数据库慢
+
+
+jtl生成html
+jmeter -g login500.jtl -o login500
+
+
+jmeter -JthreadCount=2 -JRanpup=1 -Jcycle=2  -Jtime=40 -Durl=www.baidu.com -Dport=80 -n -t baidu.jmx -l baidu.jtl
+
+
+注册：
+jmeter -n -t accept.jmx -l register100.jtl -e -o register100 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=100 -Jtime=10 -Jcycle=-1 -Jduration=300
+
+
+登陆
+jmeter -n -t accept.jmx -l login500.jtl -e -o login500 -Jip=t-tbapi.gamesword.com -Jport=80 -JthreadCount=500 -Jtime=10 -Jcycle=-1 -Jduration=300
+
+
+
+jmeter -n -t search.jmx -l search500.jtl -e -o search500 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=500 -Jtime=10 -Jcycle=-1 -Jduration=300
+jmeter -n -t addProcure.jmx -l addProcure100.jtl -e -o addProcure100 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=100 -Jtime=10 -Jcycle=-1 -Jduration=300
+jmeter -n -t addWish.jmx -l addWish100.jtl -e -o addWish100 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=100 -Jtime=10 -Jcycle=-1 -Jduration=300
+
+jmeter -n -t firstPage.jmx -l firstPage500.jtl -e -o firstPage500 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=500 -Jtime=10 -Jcycle=-1 -Jduration=300
+jmeter -n -t accept.jmx -l accept100.jtl -e -o accept100 -Jip=tbapi.gamesword.com -Jport=80 -JthreadCount=100 -Jtime=10 -Jcycle=-1 -Jduration=300
+
+
+
+
+ 
+ 
+
+ 
+ 
+
+提取核心业务、高频业务
+1、进入采购单首页 
+2、进入许愿单首页
+3、进入精选代码
+4、进入热门品牌
+5、进入旅人排行
+6、首页搜索                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+7、查看商品详情
+8、添加购物车
+9、查看购物车
+10、提交订单
+11、查看订单
+12、商品结算
+
+
+${__RandomString(1,我是你爸安東尼大祐池玖呆呆呆小安東尼小額cccccc黃韻如黃小茜志挺,)}
+
+brand 
+${__RandomString(1,道具酒鋼彈鑰匙圈防潑水防踢背心防踢被阿斯顿发送地方陌陌雞非賣品题目风扇養生健康饭饭饭鸡黑色龙,)}
+tag
+${__RandomString(1,道具酒鋼彈鑰匙圈防潑水防踢背心防踢被阿斯顿发送地方陌陌雞非賣品题目风扇養生健康饭饭饭鸡黑色龙,)}
 
