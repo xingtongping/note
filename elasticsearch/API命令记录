@@ -69,6 +69,17 @@ POST /_sql?format=json
 
 
 
+curl -H "Content-Type: application/json"  -XGET "http://localhost:9200/user/_search" -d '{
+  "query": {
+     "query_string":{
+            "default_field":"nickname",
+            "query":"*我*"
+       }
+   }
+}'
+
+
+
 启动sql窗口：
 elasticsearch-6.8.3/bin/elasticsearch-sql-cli
 
