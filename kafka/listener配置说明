@@ -1,0 +1,33 @@
+单网络环境
+对于调用者的三个地方 , 都在同一个网络环境里 , 那么只配置一个地址就好了 .
+
+举个例子 , 有以下机器配置:
+
+broker 1 : 10.120.0.1
+broker 2 : 10.120.0.2
+producer : 10.120.0.3
+consumer : 10.120.0.4
+所以应用都在同一个网络环境里 , 互相可以直接连通的. 那么对于broker 1 这个应用的配置就可以是:
+
+listeners=PLANTEXT://0.0.0.0:9092
+advertised.listeners=PLANTEXT://10.120.0.1:9092
+那么其他三个应用上 , 在调用broker 1的时候 , 都是通过10.120.0.1:9092这个地址 .
+
+多网络环境
+一般是内外网 , 就两个环境 , 其他博客上这种配置很多 .
+这里我们假设有三个网络环境 , kafka 集群内一个网络 , 生产者一个网络 , 消费者一个网络.
+
+broker 1 : 10.120.0.1 , 172.120.0.1 , 115.120.0.1
+broker 2 : 10.120.0.2
+producer : 172.120.0.2
+consumer : 115.120.0.2
+这时候broker 1 的网络配置,可以是如下配置:
+
+listeners=PLANTEXT://0.0.0.0:9092
+advertised.listeners=INNER://10.120.0.1:9090,PRO://172.120.0.1:9092,CON:115.120.0.1:9092
+listener.security.protocol.map=INNER:PLANTEXT,PRO:PLANTEXT,CON:PLANTEXT
+inter.broker.listener.name=INNER
+设置了三个地址 . broker之间通信使用INNER, 当producer来调用时 , 给172.120.0.1:9092这个地址 , 当consumer来调用时 , 给115.120.0.1:9092这个地址
+
+
+总结：advertised_listeners 是对外暴露的服务端口，真正建立连接用的是 listeners。
