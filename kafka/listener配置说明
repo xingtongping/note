@@ -31,3 +31,23 @@ inter.broker.listener.name=INNER
 
 
 总结：advertised_listeners 是对外暴露的服务端口，真正建立连接用的是 listeners。
+
+
+
+
+
+
+
+IP：  (请修改自己的ip地址)
+
+    内网：172.18.10.10          
+
+    外网：120.78.22.22
+
+1. 先在/etc/hosts文件中添加解析记录
+            172.18.10.10    HostName
+                
+2. 修改 kafka_2.11-2.0.0/config    server.properties
+        listeners=PLAINTEXT://0.0.0.0:9092
+        advertised.listeners=PLAINTEXT://120.78.22.22:9092
+        advertised.host.name=HostName    
