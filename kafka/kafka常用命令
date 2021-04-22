@@ -15,3 +15,7 @@ kafka-consumer-groups.sh --describe --bootstrap-server localhost:9092 --group lo
 kafka-topics.sh --list --zookeeper spark:2181
 消费者组列表
 kafka-consumer-groups.sh --bootstrap-server spark:9092 --list
+指定消费者组消费数据
+kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --group tb --topic fail_topic
+指定offset
+kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --offset 29185  --topic fail_topic  --partition 0
