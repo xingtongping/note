@@ -1,0 +1,124 @@
+PUT course/_mapping/course?include_type_name=true
+{
+      "properties": {
+        "course":{
+          "type": "nested"
+          , "properties": {
+                "key1": {
+                  "type": "completion",
+                  "analyzer": "ik_max_word"
+                  },
+                "key2": {
+                  "type": "text",
+                  "analyzer": "ik_max_word"
+                },
+                "course_score": {
+                "type": "long"
+                }
+          }
+        },
+          "course_name": {
+            "type": "text"
+            , "analyzer": "ik_max_word"
+          },
+          "course_id": {
+            "type": "long"
+          }
+      }
+}
+PUT course/course/1
+{
+  "course":[
+    {
+     "key1":"语文,高一,高二,高三",
+     "key2":"高考作文",
+     "course_score":15
+    },
+    {
+      "key1":",语文,高二",
+      "key2":"语文高考",
+      "course_score":9
+    },
+    {
+      "key1":",努力,学习",
+      "key2":"高考",
+      "course_score":9
+    }
+  ],
+  "course_name":"语文高考基础题满分策略",
+  "course_id":13
+}
+
+PUT course/course/2
+{
+  "course":[
+    {
+    "key1":",其他,高一,高二,高三",
+    "key2":"鲁林希",
+    "course_score":21
+    },
+    {
+    "key1":",其他,高一",
+    "key2":"高考",
+    "course_score":11
+    },
+    {
+    "key1":",其他,高二,高三",
+    "key2":"高考",
+    "course_score":2
+    }
+  ],
+  "course_name":"师兄师姐来帮忙-方法篇",
+  "course_id":220
+}
+
+PUT course/course/3
+{
+  "course":[
+    {
+    "key1":",其他,高一,高三",
+    "key2":"高考",
+    "course_score":21
+    }
+  ],
+  "course_name":"师兄师姐来帮忙-自招全流程",
+  "course_id":221
+}
+
+
+
+#自动补全查询
+POST /course/_doc/_search
+{ "size": 0,
+  "suggest": {
+    "word-suggest": {
+      "prefix": "语",
+      "completion": {
+        "size":2,
+        "field": "course.key1"
+      }
+    }
+  }
+}
+
+#模糊匹配
+GET /course/_search
+{
+  "query": {
+  "bool": {
+    "must": [
+      {
+        "nested": {
+          "path": "course",
+          "query": {
+            "query_string": {
+              "default_field": "course.key1", 
+              "query": "*三*"
+            }
+          }
+        }
+      }
+    ]
+  }
+  }
+}
