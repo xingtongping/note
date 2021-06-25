@@ -1,0 +1,41 @@
+delete keys
+put keys
+
+PUT keys/_mapping/_doc?include_type_name=true
+{
+      "properties": {
+        "_class": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "key": {
+                  "type": "completion",
+                  "analyzer": "gama",
+                  "search_analyzer": "ik_max_word"
+              },
+        "create_time":{
+                   "format": "uuuu-MM-dd HH:mm:ss",
+                   "type":"date"
+         }
+      }
+}
+
+POST /keys/_search
+{ "size": 0,
+  "suggest": {
+    "keys-suggest": {
+      "prefix": "商品",
+      "completion": {
+        "size":10,
+        "field": "key",
+        "skip_duplicates": true
+      }
+      
+    }
+  }
+}
