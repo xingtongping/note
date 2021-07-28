@@ -1,0 +1,5 @@
+注冊時：boolean result = RedisUtil.addBloomFilter("bloom_test","xing");
+登錄：RedisUtil.existsBloomFilter("bloom_test","xing");
+
+
+https://juejin.cn/post/6844903862072000526
