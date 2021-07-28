@@ -1,3 +1,10 @@
+初始化：
+name, initCapacity, errorRate
+
+if(!RedisUtil.exists(CommonUtils.BLOOMFILTER_REGISTER)) {
+   RedisUtil.createBloomFilter(CommonUtils.BLOOMFILTER_REGISTER, 10000000, 0.01);
+}
+
 注冊時：boolean result = RedisUtil.addBloomFilter("bloom_test","xing");
 登錄：RedisUtil.existsBloomFilter("bloom_test","xing");
 
