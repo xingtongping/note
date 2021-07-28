@@ -1,0 +1,172 @@
+package com.mg.tb.utils;
+
+import com.mg.redis.core.RedisUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.params.SetParams;
+
+import java.util.Collections;
+
+/**
+ * @ClassName RedisLockUtils
+ * @Description redis锁
+ * @Date 2020/11/9 15:42
+ * @Version 1.0
+ */
+public class RedisLockUtils {
+
+    private static Logger logger = LoggerFactory.getLogger(RedisLockUtils.class);
+
+    /**
+     * 锁的资源
+     */
+
+
+    /**
+     * 许愿单锁id
+     */
+    public static String LOCK_WISH_BEAN = "redis_lock_wish_bean_";
+
+    /**
+     * 采购单锁id
+     */
+    public static String LOCK_PROCURE_BEAN = "redis_lock_procure_bean_";
+
+    public static String LOCK_PURCHASE = "redis_lock_purchase_";
+
+    /**
+     * 用户钱包锁，LOCK_USER_WALLET+userId+"_"
+     */
+    public static String LOCK_USER_WALLET = "redis_lock_walletBean_";
+
+    /**
+     * 商品品牌名锁（防止并发同一个品牌产生多条记录）
+     */
+    public static String LOCK_BRAND_NAME = "redis_lock_brandName_";
+
+    /**
+     * 獲取鎖key
+     */
+    public static String getLockKey(String keyPre,Object keyResource){
+        return keyPre + keyResource + "_";
+    }
+
+    /**
+     * 尝试获取分布式锁，不可设置失效时间，固定为60秒
+     * @param lockKey 锁key
+     * @param lockValue 锁password
+     * @return
+     */
+    public static boolean lock(String lockKey, String lockValue) {
+        try{
+            boolean result = false;
+            //循环600次，每次休眠100毫秒，60钞内拿不到放弃
+            for(int i=0;i<600;i++){
+                if("OK".equals(RedisUtil.loadCluster().set(lockKey, lockValue, SetParams.setParams().nx().ex(60)))){
+                    result = true;
+                    break;
+                }else {
+                    Thread.sleep(100);
+                }
+            }
+            return result;
+        }catch(Exception e){
+            logger.error("redis lock(String lockKey, String lockValue):"+e.toString());
+            return false;
+        }
+    }
+
+    /***
+     * 尝试获取分布式锁，可设置失效时间，单位为秒
+     * @param lockKey 锁的名称
+     * @param lockValue 解锁的密码（思考下为何需要解锁的密码？）
+     * @param time 锁的时间
+     * @return 是否上锁成功
+     */
+    public static boolean lock(String lockKey, String lockValue, int time) {
+        try{
+            boolean result = false;
+            //循环600次，每次休眠100毫秒，60钞内拿不到放弃
+            for(int i=0;i<600;i++){
+                //调用LUA脚本保证代码的原子性（如果上锁步骤是多行代码必然是错误的）
+                if("OK".equals(RedisUtil.loadCluster().set(lockKey,lockValue,SetParams.setParams().nx().ex(time)))){
+                    result = true;
+                    break;
+                }else {
+                    Thread.sleep(100);
+                }
+            }
+            return result;
+        }catch(Exception e){
+            return false;
+        }
+    }
+
+    /***
+     * 判断key是否已被锁着
+     * @param lockKey 锁的名称
+     * @return 是否上锁成功
+     */
+    public static boolean isLock(String lockKey) {
+        return RedisUtil.loadCluster().exists(lockKey);
+    }
+
+    /***
+     * 等待解锁,解锁：true，未解锁：false
+     * <p>判断key是否已被锁着，等待时间为foreachNum/sleepMillis（秒）</p>
+     * </p>例如：isLock("xxx",600,100) 每次睡眠100毫秒，一共执行600次，即60秒内返回所需结果，如果返回"true",即解锁了</p>
+     * @param lockKey 锁的名称
+     * @param foreachNum 循环次数
+     * @param sleepMillis  睡眠时间
+     * @return 解锁：true，未解锁：false；默认false
+     */
+    public static boolean waitUnLock(String lockKey, long foreachNum, long sleepMillis) {
+        try{
+            boolean result = false;
+            //循环600次，每次休眠100毫秒，60钞内拿不到放弃
+            for(int i=0;i<foreachNum;i++){
+                if(!RedisUtil.loadCluster().exists(lockKey)){
+                    result = true;
+                    break;
+                }else {
+                    Thread.sleep(sleepMillis);
+                }
+            }
+            return result;
+        }catch(Exception e){
+            return false;
+        }
+    }
+
+
+    /**
+     * 释放分布式锁
+     * @param lockKey 锁的名称
+     * @param lockValue 锁的密码
+     * @return 释放解锁成功
+     */
+    public static boolean unLock(String lockKey, String lockValue) {
+        try{
+            //执行lua脚本，如果执行成功会返回1
+            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            return new Long(1).equals(RedisUtil.loadCluster().eval(script,
+                    Collections.singletonList(lockKey), Collections.singletonList(lockValue)));
+        }catch(Exception e){
+            logger.error("redis unLock(String lockKey, String lockValue):"+e.toString());
+            return false;
+        }
+    }
+}
+
+
+
+
+使用：
+String lockKey = RedisLockUtils.LOCK_USER_WALLET + userId +"_";
+String lockPassWord = cn.hutool.core.lang.UUID.fastUUID().toString();
+if(RedisLockUtils.lock(lockKey,lockPassWord)){
+}
+RedisLockUtils.unLock(lockKey,lockPassWord);
+
+过期时间：防止死锁
+lockPassWord保证该用户自己释放锁
