@@ -138,3 +138,22 @@ fielddata cache，在对field进行排序或者聚合的时候，会用到这个
 indices.fielddata.cache.size，这个参数可以控制这个cache的大小，可以是30%这种相对大小，或者是12GB这种绝对大小，默认是没有限制的。
 
 fielddata的原理是对分词后的field进行排序或者聚合的时候，才会使用fielddata这种jvm内存数据结构。如果是对普通的未分词的field进行排序或者聚合，其实默认是用的doc value数据结构，是在os cache中缓存的。
+
+
+
+
+
+
+提高查询效率
+
+增加filesystem cache，操作系统会将磁盘文件里的数据自动缓存到 filesystem cache，这样查询会较少与disk的交互
+
+数据预热，如果filesystem cache不足放下所有数据，那么肯定有一部分要放在disk，此时可以开一个定时任务定时主动search hot data，让hot data能够长期驻留在filesystem cache
+
+冷热分离，将大量的访问很少、频率很低的冷数据，单独写一个索引，然后将访问很频繁的热数据单独写一个索引。这样可以确保热数据在被预热之后，尽量都让他们留在hot node的filesystem cache里，而不会被冷数据给冲刷掉
+
+document模型设计(schema选取)，es的关联、aggregation都是耗时操作，最好能在ETL入库es前就完成(比如说sum写成一个字段，而不是实时算sum)
+
+document模型设计2，减少不必要的字段，例如body可以不存放在es内部，而存放在外部的hbase里面，通过doc_id来获取，而es只做倒排。这样可以减少es的data，以便更完全地存放于filesystem cache
+
+不要深分页，因为深分页需要算topK的，很容易拉爆coordinator节点。普遍情况是使用scroll_api和search_after一页一页地拉取，而不是随机跳页
