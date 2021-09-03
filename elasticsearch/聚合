@@ -1,0 +1,41 @@
+单字段聚合快
+
+
+多字段聚合使用广度优先、在第一级的基础上裁剪再聚合
+
+
+优化方案一：默认深度优先聚合改为广度优先聚合。
+"collect_mode" : "breadth_first"
+breadth_first 先计算出当前聚合的结果，针对这个结果在对子聚合进行计算。
+
+
+优化方案二： 每一层terms aggregation内部加一个 “execution_hint”: “map”。
+"execution_hint": "map"
+
+国内解释最详细的版本来自Wood大叔：
+Map方式的结论可简要概括如下：
+1）查询结果直接放入内存中构建map，在查询结果集小的场景下，速度极快；
+2）但如果待结果集合很大的情况，map方式不一定也快。
+
+对比场景一与场景二、三，说明：
+1）当结果集合比较少的时候，map聚合方式明显速度更快，速度提升了接近5倍！
+2）当结果集合比较大的时候（百万——亿级别）的时候，传统的聚合方式会比map方式快。
+
+
+
+3.1 实验场景
+场景一：在近亿的document中，检索满足给定条件的数据，并对聚合结果全量聚合。
+场景二：在百万级别的document中，全量聚合。
+场景三：在近亿级别的document中，全量聚合
+
+4、小结
+1）global_ordinals是关键字字段（ keyword field ）的默认选项，它使用 全局顺序(global ordinals) 来动态分配存储区，因此内存使用情况与作为聚合作用域一部分的文档值的数量成线性关系。
+
+2）只有极少数文档与查询匹配匹配时才应考虑使用map方式。
+默认情况下，只有在脚本上运行聚合时才会使用map，因为它们没有序号( ordinals )。
+
+
+
+
+https://blog.csdn.net/zwgdft/article/details/83215977
+https://blog.csdn.net/laoyang360/article/details/79253294
