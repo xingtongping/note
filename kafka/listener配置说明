@@ -37,7 +37,6 @@ inter.broker.listener.name=INNER
 
 
 
-
 IP：  (请修改自己的ip地址)
 
     内网：172.18.10.10          
@@ -51,3 +50,13 @@ IP：  (请修改自己的ip地址)
         listeners=PLAINTEXT://0.0.0.0:9092
         advertised.listeners=PLAINTEXT://120.78.22.22:9092
         advertised.host.name=HostName    
+        
+        
+        
+        
+        
+listeners中配置的IP和端口的作用是接收客户端初始请求，而客户端实际生产和消费数据使用的是advertised.listeners中的IP和端口，当没有advertised.listeners配置的时候，
+advertised.listeners就直接复用了listeners的配置。当我们把listeners中的IP绑定在0.0.0.0的时候，这两个端口内外网都可以访问到，但advertised.listeners给内网客户
+端返回的是内网地址和端口，给外网返回的是外网地址和端口，因此内外网访问也得以分开，最重要的是，Ambari在通过端口来检测broker是否存活时不会再有问题，因为无论两个端口通
+过内外网都可以访问到。
+
