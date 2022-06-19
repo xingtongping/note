@@ -1,0 +1,23 @@
+1、ShardingSphere - 分布式主键配置
+ShardingSphere提供灵活的配置分布式主键生成策略方式。在分片规则配置模块克配置每个表的主键生成策略。默认使用雪花算法。（snowflake）生成64bit的长整型数据。支持两种方式配置
+
+SNOWFLAKE
+UUID
+这里切记：主键列不能自增长。数据类型是：bigint(20)
+
+spring:
+  shardingsphere:
+    sharding:
+      tables:
+        # ksd_user 逻辑表名
+        ksd_user:
+          key-generator:
+              # 主键的列明，
+            column: userid
+            type: SNOWFLAKE
+执行
+
+http://localhost:8085/user/save?sex=3&age=3&birthday=2020-03-09
+可以查看到新增的语句多了一个userid为576906137413091329的唯一值。这个值是通过雪花算法计算出来的唯一值
+
+2021-03-11 22:59:01.605  INFO 4900 --- [nio-8085-exec-1] ShardingSphere-SQL                       : Actual SQL: ds1 ::: insert into ksd_user1 (nickname, password, sex, age, birthday, userid) VALUES (?, ?, ?, ?, ?, ?) ::: [zhangsan-70137485, 1234567, 3, 3, 2020-03-09 00:00:00.0, 576906137413091329]
