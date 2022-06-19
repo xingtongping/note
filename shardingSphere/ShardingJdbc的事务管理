@@ -1,0 +1,134 @@
+1、分布式式事务的应用和实践
+官方地址：https://shardingsphere.apache.org/document/legacy/4.x/document/cn/features/transaction/function/base-transaction-seata/
+
+https://shardingsphere.apache.org/document/legacy/4.x/document/cn/manual/sharding-jdbc/usage/transaction/
+
+数据库事务需要满足ACID（原子性、一致性、隔离性、持久性）四个特性。
+原子性（Atomicity）指事务作为整体来执行，要么全部执行，要么全不执行。
+一致性（Consistency）指事务应确保数据从一个一致的状态转变为另一个一致的状态。
+隔离性（Isolation）指多个事务并发执行时，一个事务的执行不应影响其他事务的执行。
+持久性（Durability）指已提交的事务修改数据会被持久保存。
+在单一数据节点中，事务仅限于对单一数据库资源的访问控制，称之为本地事务。几乎所有的成熟的关系型数据库都提供了对本地事务的原生支持。 但是在基于微服务的分布式应用环境下，越来越多的应用场景要求对多个服务的访问及其相对应的多个数据库资源能纳入到同一个事务当中，分布式事务应运而生。
+
+关系型数据库虽然对本地事务提供了完美的ACID原生支持。 但在分布式的场景下，它却成为系统性能的桎梏。如何让数据库在分布式场景下满足ACID的特性或找寻相应的替代方案，是分布式事务的重点工作。
+
+本地事务
+在不开启任何分布式事务管理器的前提下，让每个数据节点各自管理自己的事务。 它们之间没有协调以及通信的能力，也并不互相知晓其他数据节点事务的成功与否。 本地事务在性能方面无任何损耗，但在强一致性以及最终一致性方面则力不从心。
+
+两阶段提交
+XA协议最早的分布式事务模型是由X/Open国际联盟提出的X/Open Distributed Transaction Processing（DTP）模型，简称XA协议。
+
+基于XA协议实现的分布式事务对业务侵入很小。 它最大的优势就是对使用方透明，用户可以像使用本地事务一样使用基于XA协议的分布式事务。 XA协议能够严格保障事务ACID特性。
+
+严格保障事务ACID特性是一把双刃剑。 事务执行在过程中需要将所需资源全部锁定，它更加适用于执行时间确定的短事务。 对于长事务来说，整个事务进行期间对数据的独占，将导致对热点数据依赖的业务系统并发性能衰退明显。 因此，在高并发的性能至上场景中，基于XA协议的分布式事务并不是最佳选择。
+
+柔性事务
+如果将实现了ACID的事务要素的事务称为刚性事务的话，那么基于BASE事务要素的事务则称为柔性事务。 BASE是基本可用、柔性状态和最终一致性这三个要素的缩写。
+
+基本可用（Basically Available）保证分布式事务参与方不一定同时在线。
+柔性状态（Soft state）则允许系统状态更新有一定的延时，这个延时对客户来说不一定能够察觉。
+而最终一致性（Eventually consistent）通常是通过消息传递的方式保证系统的最终一致性。
+
+在ACID事务中对隔离性的要求很高，在事务执行过程中，必须将所有的资源锁定。 柔性事务的理念则是通过业务逻辑将互斥锁操作从资源层面上移至业务层面。通过放宽对强一致性要求，来换取系统吞吐量的提升。
+
+基于ACID的强一致性事务和基于BASE的最终一致性事务都不是银弹，只有在最适合的场景中才能发挥它们的最大长处。 可通过下表详细对比它们之间的区别，以帮助开发者进行技术选型。
+
+
+
+1-1：导入分布式事务的依赖
+ <!--依赖sharding-->
+ <dependency>
+     <groupId>io.shardingsphere</groupId>
+     <artifactId>sharding-transaction-spring-boot-starter</artifactId>
+     <version>3.1.0</version>
+ </dependency>
+1-2：事务的几种类型
+- 本地事务
+完全支持非跨库事务，例如：仅分表，或分库但是路由的结果在单库中。
+完全支持因逻辑异常导致的跨库事务。例如：同一事务中，跨两个库更新。更新完毕后，抛出空指针，则两个库的内容都能回滚。
+不支持因网络、硬件异常导致的跨库事务。例如：同一事务中，跨两个库更新，更新完毕后、未提交之前，第一个库宕机，则只有第二个库数据提交。
+- 两阶段XA事务
+支持数据分片后的跨库XA事务
+两阶段提交保证操作的原子性和数据的强一致性
+服务宕机重启后，提交/回滚中的事务可自动恢复
+SPI机制整合主流的XA事务管理器，默认Atomikos，可以选择使用Narayana和Bitronix
+同时支持XA和非XA的连接池
+提供spring-boot和namespace的接入端
+不支持：
+
+服务宕机后，在其它机器上恢复提交/回滚中的数据
+- Seata柔性事务
+完全支持跨库分布式事务
+支持RC隔离级别
+通过undo快照进行事务回滚
+支持服务宕机后的，自动恢复提交中的事务
+依赖：
+
+需要额外部署Seata-server服务进行分支事务的协调
+待优化项
+ShardingSphere和Seata会对SQL进行重复解析
+1-3：导入分布式事务的依赖
+package com.xuexiangban.shardingjdbc.service;
+import com.xuexiangban.shardingjdbc.entity.Order;
+import com.xuexiangban.shardingjdbc.entity.User;
+import com.xuexiangban.shardingjdbc.mapper.OrderMapper;
+import com.xuexiangban.shardingjdbc.mapper.UserMapper;
+import io.shardingsphere.transaction.annotation.ShardingTransactionType;
+import io.shardingsphere.transaction.api.TransactionType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+/**
+ * @author: 学相伴-飞哥
+ * @description: UserService
+ * @Date : 2021/3/14
+ */
+@Service
+public class UserOrderService {
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private OrderMapper orderMapper;
+    @ShardingTransactionType(TransactionType.XA)
+    @Transactional(rollbackFor = Exception.class)
+    public int saveUserOrder(User user, Order order) {
+        userMapper.addUser(user);
+        order.setUserid(user.getId());
+        orderMapper.addOrder(order);
+        //int a = 1/0; //测试回滚，统一提交的话，将这行注释掉就行
+        return 1;
+    }
+}
+测试
+
+package com.xuexiangban.shardingjdbc;
+import com.xuexiangban.shardingjdbc.entity.Order;
+import com.xuexiangban.shardingjdbc.entity.User;
+import com.xuexiangban.shardingjdbc.entity.UserOrder;
+import com.xuexiangban.shardingjdbc.mapper.UserOrderMapper;
+import com.xuexiangban.shardingjdbc.service.UserOrderService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+@SpringBootTest
+class ShardingJdbcApplicationTests {
+    @Autowired
+    private UserOrderService userOrderService;
+    @Test
+    void contextLoads() throws Exception {
+        User user = new User();
+        user.setNickname("zhangsan" + new Random().nextInt());
+        user.setPassword("1234567");
+        user.setSex(1);
+        user.setAge(2);
+        user.setBirthday(new Date());
+        Order order = new Order();
+        order.setCreateTime(new Date());
+        order.setOrdernumber("133455678");
+        order.setProductid(1234L);
+        userOrderService.saveUserOrder(user, order);
+    }
+}
