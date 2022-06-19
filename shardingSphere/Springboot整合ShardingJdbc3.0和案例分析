@@ -1,0 +1,216 @@
+目标
+
+使用Sharding-JDBC 分库分表,掌握什么是Sharding-JDBC.
+
+分析
+
+什么是Sharding-JDBC
+
+Sharding-JDBC提供标准化的数据分片、分布式事务和数据库治理功能，定位为轻量级Java框架，在Java的JDBC层提供的额外服务。 它使用客户端直连数据库，以jar包形式提供服务，无需额外部署和依赖，可理解为增强版的JDBC驱动，完全兼容JDBC和各种ORM框架。适用于任何基于Java的ORM框架，如：JPA, Hibernate, Mybatis, Spring JDBC Template或直接使用JDBC。
+基于任何第三方的数据库连接池，如：DBCP, C3P0, BoneCP, Druid, HikariCP等。
+支持任意实现JDBC规范的数据库。目前支持MySQL，Oracle，SQLServer和PostgreSQL。
+
+2. 为什么要分片？
+
+传统的将数据集中存储至单一数据节点的解决方案，在性能、可用性和运维成本这三方面已经难于满足互联网的海量数据场景。
+从性能方面来说，由于关系型数据库大多采用B+树类型的索引，在数据量超过阈值的情况下，索引深度的增加也将使得磁盘访问的IO次数增加，进而导致查询性能的下降；同时，高并发访问请求也使得集中式数据库成为系统的最大瓶颈。
+从可用性的方面来讲，服务化的无状态型，能够达到较小成本的随意扩容，这必然导致系统的最终压力都落在数据库之上。而单一的数据节点，或者简单的主从架构，已经越来越难以承担。数据库的可用性，已成为整个系统的关键。
+从运维成本方面考虑，当一个数据库实例中的数据达到阈值以上，对于DBA的运维压力就会增大。数据备份和恢复的时间成本都将随着数据量的大小而愈发不可控。一般来讲，单一数据库实例的数据的阈值在1TB之内，是比较合理的范围。
+在传统的关系型数据库无法满足互联网场景需要的情况下，将数据存储至原生支持分布式的NoSQL的尝试越来越多。 但NoSQL对SQL的不兼容性以及生态圈的不完善，使得它们在与关系型数据库的博弈中始终无法完成致命一击，而关系型数据库的地位却依然不可撼动。
+据分片指按照某个维度将存放在单一数据库中的数据分散地存放至多个数据库或表中以达到提升性能瓶颈以及可用性的效果。 数据分片的有效手段是对关系型数据库进行分库和分表。分库和分表均可以有效的避免由数据量超过可承受阈值而产生的查询瓶颈。 除此之外，分库还能够用于有效的分散对数据库单点的访问量；分表虽然无法缓解数据库压力，但却能够提供尽量将分布式事务转化为本地事务的可能，一旦涉及到跨库的更新操作，分布式事务往往会使问题变得复杂。 使用多主多从的分片方式，可以有效的避免数据单点，从而提升数据架构的可用性。
+通过分库和分表进行数据的拆分来使得各个表的数据量保持在阈值以下，以及对流量进行疏导应对高访问量，是应对高并发和海量数据系统的有效手段。
+3. 分片的方式
+
+数据分片的拆分方式又分为垂直分片和水平分片。
+
+垂直拆分是把不同的表拆到不同的数据库中，‘而水平拆分是把同一个表拆到不同的数据库中（或者是把一张表数据拆分成n多个小表）。相对于垂直拆分，水平拆分==不是将表的数据做分类，而是按照某个字段的某种规则来分散到多个库中==，==每个表中包含一部分数据==。简单来说，我们可以将数据的水平切分理解为是==按照数据行的切分==，就是将表中的某些行切分到一个数据库，而另外某些行又切分到其他的数据库中，主要有分表，分库两种模式 该方式提高了系统的稳定性跟负载能力，但是跨库join性能较差。
+
+4：Sharding-JDBC的核心/工原理
+
+Sharding-JDBC数据分片主要流程是由SQL解析 →执行器优化 → SQL路由 →SQL改写 →SQL执行 →结果归并的流程组成。
+
+SQL解析
+分为词法解析和语法解析。 先通过词法解析器将SQL拆分为一个个不可再分的单词。再使用语法解析器对SQL进行理解，并最终提炼出解析上下文。 解析上下文包括表、选择项、排序项、分组项、聚合函数、分页信息、查询条件以及可能需要修改的占位符的标记。
+
+SQL解析分为两步， 第一步为 词法解析， 词法解析的意思是就是将SQL进行拆分。
+例：
+select from t_user where id = 1
+词法解析：
+[select] [] [from] [t_user] [where] [id=1]
+第二步语法解析,语法解析器将SQL转换为抽象语法树。
+
+img
+
+执行器优化
+合并和优化分片条件，如OR等。
+
+SQL路由
+根据解析上下文匹配用户配置的分片策略，并生成路由路径。目前支持分片路由和广播路由。
+
+举例说明，如果按照order_id的奇数和偶数进行数据分片，一个单表查询的SQL如下：
+SELECT FROM t_order WHERE order_id IN (1, 2);
+那么路由的结果应为：
+SELECT FROM t_order_0 WHERE order_id IN (1, 2);
+SELECT * FROM t_order_1 WHERE order_id IN (1, 2);
+
+SQL改写
+将SQL改写为在真实数据库中可以正确执行的语句，SQL改写分为正确性改写和优化改写。
+
+ 从一个最简单的例子开始，若逻辑SQL为：
+ SELECT order_id FROM t_order WHERE order_id=1;
+ 假设该SQL配置分片键order_id，并且order_id=1的情况，将路由至分片表1。那么改写之后的SQL应该为：
+ SELECT order_id FROM t_order_1 WHERE order_id=1;
+SQL执行
+通过多线程执行器异步执行。
+结果归并
+将多个执行结果集归并以便于通过统一的JDBC接口输出。结果归并包括流式归并、内存归并和使用装饰者模式的追加归并这几种方式。
+
+15：SharedingJdbc完成数据的读写分离
+目标
+
+使用sharedingjdbc完成数据库的分库分表业务
+
+步骤
+
+1：新建一个springboot工程
+
+2：创建两个数据库order1，order2，分别创建t_address表如下：
+
+DROP TABLE IF EXISTS `t_address`;
+CREATE TABLE `t_address` (
+  `id` bigint(20) NOT NULL,
+  `code` varchar(64) DEFAULT NULL COMMENT '编码',
+  `name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `pid` varchar(64) NOT NULL DEFAULT '0' COMMENT '父id',
+  `type` int(11) DEFAULT NULL COMMENT '1国家2省3市4县区',
+  `lit` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+3： 开始整合SpringBoot，这种方式比较简单只要加入sharding-jdbc-spring-boot-starter依赖，在application.yml中配置数据源，分片策略即可使用，这种方式简单，方便。pom.xml
+
+<dependency>
+    <groupId>io.shardingsphere</groupId>
+    <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+    <version>3.0.0</version>
+</dependency>
+<dependency>
+    <groupId>io.shardingsphere</groupId>
+    <artifactId>sharding-jdbc-spring-namespace</artifactId>
+    <version>3.0.0</version>
+</dependency>
+appplication.yml
+
+mybatis:
+  configuration:
+    mapUnderscoreToCamelCase: true
+spring:
+  main:
+    allow-bean-definition-overriding: true
+# shardingjdbc分库分表
+sharding:
+  jdbc:
+    datasource:
+      names: ds0,ds1
+      ds0:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/order1?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
+        username: root
+        password: root
+      ds1:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/order2?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
+        username: root
+        password: root
+    config:
+      sharding:
+        props:
+          sql.show: true
+        tables:
+          t_user: #t_user表【即分库，又分表】
+            key-generator-column-name: id # 主键
+            actual-data-nodes: ds${0..1}.t_user${0..1} #数据节点
+            database-strategy: #分库策略
+              inline:
+                sharding-column: city_id
+                algorithm-expression: ds${city_id % 2}
+            table-strategy: #分表策略
+              inline:
+                shardingColumn: sex
+                algorithm-expression: t_user${sex % 2}
+          t_address: #t_address表【只分库】
+            key-generator-column-name: id
+            actual-data-nodes: ds${0..1}.t_address
+            database-strategy:
+              inline:
+                shardingColumn: lit
+                algorithm-expression: ds${lit % 2}
+4：编写Vo
+
+package com.itheima.springbootshardingpro.vo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class AddressVo {
+    private Long id;
+    private String code;
+    private String name;
+    private String pid;
+    private Integer type;
+    private Integer lit;
+}
+5：编写Dao
+
+package com.itheima.springbootshardingpro.dao;
+import com.itheima.springbootshardingpro.vo.AddressVo;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Select;
+import java.util.List;
+@Mapper
+public interface IndexDao {
+    @Options(useGeneratedKeys = true)
+    @Insert("insert into t_address (code,name,pid,type,lit)values(#{code},#{name},#{pid},#{type},#{lit})")
+    int insertAddress(AddressVo addressVo);
+    @Select("select * from t_address order by lit")
+    List<AddressVo> listAddress();
+}
+6： 编写controller
+
+package com.itheima.springbootshardingpro.web;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.itheima.springbootshardingpro.dao.IndexDao;
+import com.itheima.springbootshardingpro.vo.AddressVo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+@RestController
+public class IndexController {
+    @Autowired
+    private IndexDao indexDao;
+    @PostMapping("/addAddress")
+    public int addAddress(AddressVo addressVo){
+        int row = indexDao.insertAddress(addressVo);
+        return row;
+    }
+    @GetMapping("/listAddress")
+    public PageInfo<AddressVo> listAddress(@RequestParam(required=false,defaultValue="1")Integer pageNum,
+                                @RequestParam(required=false,defaultValue="5")Integer pageSize){
+        PageHelper.startPage(pageNum,pageSize);
+        List<AddressVo> list =  indexDao.listAddress();
+        PageInfo<AddressVo> info = new PageInfo<>(list);
+        return info;
+    }
+}
+此时，启动项目，用postman访问插入接口：
