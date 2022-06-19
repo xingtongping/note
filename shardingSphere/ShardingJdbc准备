@@ -1,0 +1,57 @@
+1、yum安装mysql
+1-1、下载mysql的rpm地址
+http://repo.mysql.com/yum/mysql-5.7-community/el/7/x86_64/
+
+
+
+1-2、配置Mysql扩展源
+rpm -ivh http://repo.mysql.com/yum/mysql-5.7-community/el/7/x86_64/mysql57-community-release-el7-10.noarch.rpm
+1-3、yum安装mysql
+yum install mysql-community-server -y
+1-4、启动Mysql，并加入开机自启
+systemctl start mysqld
+systemctl stop mysqld
+systemctl enable mysqld
+1-5、使用Mysq初始密码登录数据库
+
+
+>grep "password" /var/log/mysqld.log
+> mysql -uroot -pma1S8xjuEA/F
+或者一步到位的做法如下
+>mysql -uroot -p$(awk '/temporary password/{print $NF}' /var/log/mysqld.log)
+1-6、修改数据库密码
+数据库默认密码规则必须携带大小写字母、特殊符号，字符长度大于8否则会报错。
+因此设定较为简单的密码时需要首先修改set global validate_password_policy和_length参数值。
+
+
+
+mysql> set global validate_password_policy=0;
+Query OK, 0 rows affected (0.00 sec)
+mysql> set global validate_password_length=1;
+Query OK, 0 rows affected (0.00 sec)
+1-7、修改密码
+mysql> set password for root@localhost = password('mkxiaoer');
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+或者
+mysql>ALTER USER 'root'@'localhost' IDENTIFIED BY 'new password';
+1-8、登录测试
+[root@http-server ~]# mysql -uroot -pmkxiaoer
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.00 sec)
+mysql> exit
+1-9、可视化工具的登录授权：(如果授权不成功，请查看防火墙)
+操作完成上面的，现在还不能用可视化的客户端进行连接，需要我们进行授权：
+
+mysql > grant all on *.* to root@'%' identified by '数据库密码';
+mysql > flush privileges;
+操作完毕，接下来可以使用navicat或者sqlylog进行远程连接了.
+
+sqlylog的下载：https://sqlyog.en.softonic.com/
