@@ -1,0 +1,273 @@
+01、内容大纲
+新建一个springboot工程
+引入相关sharding依赖、ssm依赖、数据库驱动
+定义配置application.yml
+定义entity、mapper、controller
+访问测试查看效果
+小结
+02、具体实现步骤
+02-01、 新建一个springboot工程
+
+
+02-02、 引入相关sharding依赖、ssm依赖、数据库驱动
+ <properties>
+     <java.version>1.8</java.version>
+     <sharding-sphere.version>4.0.0-RC1</sharding-sphere.version>
+ </properties>
+ <!-- 依赖web -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<!-- 依赖mybatis和mysql驱动 -->
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>2.1.4</version>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <scope>runtime</scope>
+</dependency>
+<!--依赖lombok-->
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <optional>true</optional>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<!--依赖sharding-->
+<dependency>
+    <groupId>org.apache.shardingsphere</groupId>
+    <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+    <version>${sharding-sphere.version}</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.shardingsphere</groupId>
+    <artifactId>sharding-core-common</artifactId>
+    <version>${sharding-sphere.version}</version>
+</dependency>
+<!--依赖数据源druid-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid-spring-boot-starter</artifactId>
+    <version>1.1.21</version>
+</dependency>
+02-03、 定义配置application.yml
+server:
+  port: 8085
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  shardingsphere:
+    # 参数配置，显示sql
+    props:
+      sql:
+        show: true
+    # 配置数据源
+    datasource:
+      # 给每个数据源取别名，下面的ds1,ds2,ds3任意取名字
+      names: ds1,ds2,ds3
+      # 给master-ds1每个数据源配置数据库连接信息
+      ds1:
+        # 配置druid数据源
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://47.115.94.78:3306/ksd-sharding-db?useUnicode=true&characterEncoding=utf8&tinyInt1isBit=false&useSSL=false&serverTimezone=GMT
+        username: root
+        password: mkxiaoer1986.
+        maxPoolSize: 100
+        minPoolSize: 5
+      # 配置ds2-slave
+      ds2:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://114.215.145.201:3306/ksd-sharding-db?useUnicode=true&characterEncoding=utf8&tinyInt1isBit=false&useSSL=false&serverTimezone=GMT
+        username: root
+        password: mkxiaoer1986.
+        maxPoolSize: 100
+        minPoolSize: 5
+      # 配置ds3-slave
+      ds3:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://114.215.145.201:3306/ksd-sharding-db?useUnicode=true&characterEncoding=utf8&tinyInt1isBit=false&useSSL=false&serverTimezone=GMT
+        username: root
+        password: mkxiaoer1986.
+        maxPoolSize: 100
+        minPoolSize: 5
+    # 配置默认数据源ds1
+    sharding:
+     # 默认数据源，主要用于写，注意一定要配置读写分离 ,注意：如果不配置，那么就会把三个节点都当做从slave节点，新增，修改和删除会出错。
+      default-data-source-name: ds1
+    # 配置数据源的读写分离，但是数据库一定要做主从复制
+    masterslave:
+      # 配置主从名称，可以任意取名字
+      name: ms
+      # 配置主库master，负责数据的写入
+      master-data-source-name: ds1
+      # 配置从库slave节点
+      slave-data-source-names: ds2,ds3
+      # 配置slave节点的负载均衡均衡策略，采用轮询机制
+      load-balance-algorithm-type: round_robin
+# 整合mybatis的配置XXXXX
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.xuexiangban.shardingjdbc.entity
+注意问题：
+
+ # 配置默认数据源ds1
+    sharding:
+      # 默认数据源，主要用于写，注意一定要配置读写分离
+      # 注意：如果不配置，那么就会把三个节点都当做从slave节点，新增，修改和删除会出错。
+      default-data-source-name: ds1
+    # 配置数据源的读写分离，但是数据库一定要做主从复制
+    masterslave:
+      # 配置主从名称，可以任意取名字
+      name: ms
+      # 配置主库master，负责数据的写入
+      master-data-source-name: ds1
+      # 配置从库slave节点
+      slave-data-source-names: ds2,ds3
+      # 配置slave节点的负载均衡均衡策略，采用轮询机制
+      load-balance-algorithm-type: round_robin
+如果上面的，那么shardingjdbc会采用随机的方式进行选择数据源。如果不配置default-data-source-name，那么就会把三个节点都当做从slave节点，那么新增，修改和删除会出错。
+
+02-04、 定义mapper、controller,entity
+entity
+package com.xuexiangban.shardingjdbc.entity;
+import lombok.Data;
+/**
+ * @author: 学相伴-飞哥
+ * @description: User
+ * @Date : 2021/3/10
+ */
+@Data
+public class User {
+    // 主键
+    private Integer id;
+    // 昵称
+    private String nickname;
+    // 密码
+    private String password;
+    // 性
+    private Integer sex;
+    // 性
+    private String birthday;
+}
+mapper
+package com.xuexiangban.shardingjdbc.mapper;
+import com.xuexiangban.shardingjdbc.entity.User;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+import java.util.List;
+/**
+ * @author: 学相伴-飞哥
+ * @description: UserMapper
+ * @Date : 2021/3/10
+ */
+public interface UserMapper {
+    /**
+     * @author 学相伴-飞哥
+     * @description 保存用户
+     * @params [user]
+     * @date 2021/3/10 17:14
+     */
+    @Insert("insert into ksd_user(nickname,password,sex,birthday) values(#{nickname},#{password},#{sex},#{birthday})")
+    void addUser(User user);
+    /**
+     * @author 学相伴-飞哥
+     * @description 保存用户
+     * @params [user]
+     * @date 2021/3/10 17:14
+     */
+    @Select("select * from ksd_user")
+    List<User> findUsers();
+}
+controller
+package com.xuexiangban.shardingjdbc.controller;
+import com.xuexiangban.shardingjdbc.entity.User;
+import com.xuexiangban.shardingjdbc.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+import java.util.Random;
+/**
+ * @author: 学相伴-飞哥
+ * @description: UserController
+ * @Date : 2021/3/10
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    @Autowired
+    private UserMapper userMapper;
+    @GetMapping("/save")
+    public String insert() {
+        User user = new User();
+        user.setNickname("zhangsan"+ new Random().nextInt());
+        user.setPassword("1234567");
+        user.setSex(1);
+        user.setBirthday("1988-12-03");
+        userMapper.addUser(user);
+        return "success";
+    }
+    @GetMapping("/listuser")
+    public List<User> listuser() {
+        return userMapper.findUsers();
+    }
+}
+02-05、 访问测试查看效果
+1：访问 http://localhost:8085/user/save 一直进入到ds1主节点
+2：访问 http://localhost:8085/user/listuser 一直进入到ds2、ds3节点，并且轮询进入。
+
+02-06、 日志查看
+
+
+
+
+
+
+02-07、 小结
+回顾流程
+ShardingSphere 的 3 个产品的数据分片主要流程是完全一致的。 核心由 SQL 解析 => 执行器优化 => SQL 路由 => SQL 改写 => SQL 执行 => 结果归并的流程组成。
+
+
+
+SQL 解析
+分为词法解析和语法解析。 先通过词法解析器将 SQL 拆分为一个个不可再分的单词。再使用语法解析器对 SQL 进行理解，并最终提炼出解析上下文。 解析上下文包括表、选择项、排序项、分组项、聚合函数、分页信息、查询条件以及可能需要修改的占位符的标记。
+
+执行器优化
+合并和优化分片条件，如 OR 等。
+
+SQL 路由
+根据解析上下文匹配用户配置的分片策略，并生成路由路径。目前支持分片路由和广播路由。
+
+SQL 改写
+将 SQL 改写为在真实数据库中可以正确执行的语句。SQL 改写分为正确性改写和优化改写。
+
+SQL 执行
+通过多线程执行器异步执行。
+
+结果归并
+将多个执行结果集归并以便于通过统一的 JDBC 接口输出。结果归并包括流式归并、内存归并和使用装饰者模式的追加归并这几种方式。
+
+3、Props的其他相关配置
+acceptor.size: # accept连接的线程数量,默认为cpu核数2倍
+executor.size: #工作线程数量最大，默认值: 无限制
+max.connections.size.per.query: # 每个查询可以打开的最大连接数量,默认为1
+check.table.metadata.enabled: #是否在启动时检查分表元数据一致性，默认值: false
+proxy.frontend.flush.threshold: # proxy的服务时候,对于单个大查询,每多少个网络包返回一次
+proxy.transaction.type: # 默认LOCAL,proxy的事务模型 允许LOCAL,XA,BASE三个值,LOCAL无分布式事务,XA则是采用atomikos实现的分布式事务 BASE目前尚未实现
+proxy.opentracing.enabled: # 是否启用opentracing
+proxy.backend.use.nio: # 是否采用netty的NIO机制连接后端数据库,默认False ,使用epoll机制
+proxy.backend.max.connections: # 使用NIO而非epoll的话,proxy后台连接每个netty客户端允许的最大连接数量(注意不是数据库连接限制) 默认为8
+proxy.backend.connection.timeout.seconds: #使用nio而非epoll的话,proxy后台连接的超时时间,默认60s
