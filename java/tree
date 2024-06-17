@@ -1,0 +1,61 @@
+    @Override
+    public List<NodeVO> getUserTree() {
+        List<NodeVO> voList = new ArrayList<>();
+        // 获取角色
+        List<Role> roleList = sysTagMapper.getRoleList();
+        // 获取父节点
+        List<Role> parents = roleList.stream().filter(o -> o.getParentId() == 0).collect(Collectors.toList());
+        for (Role role : parents) {
+            NodeVO rootNode = buildTree(role, roleList);
+            /*R<List<User>> listR = userSearchClient.listByRole(String.valueOf(role.getId()));
+            List<User> userList = listR.getData();
+            for (User user : userList) {
+                // 创建一个 User 类型的 NodeVO
+                NodeVO userNode = new NodeVO();
+                userNode.setId(user.getId());
+                userNode.setTitle(user.getName()); // 假设 User 有一个 username 属性
+                userNode.setType("User"); // 设置类型为 User
+                // 添加到 Role 节点的 children 列表中
+                rootNode.getChildren().add(userNode);
+            }*/
+            voList.add(rootNode);
+        }
+
+        return voList;
+    }
+
+    public NodeVO buildTree(Role role, List<Role> roleList) {
+        NodeVO vo = new NodeVO();
+        vo.setId(role.getId().toString());
+        vo.setTitle(role.getRoleName());
+        vo.setParentId(role.getParentId());
+        vo.setType("Role");
+        // 假设 NodeVO 有一个名为 children 的 List<NodeVO> 属性
+        List<NodeVO> children = new ArrayList<>();
+        // 从原始 roleList 中查找子角色
+        List<Role> childRoles = roleList.stream().filter(o -> o.getParentId().equals(role.getId())).collect(Collectors.toList());
+        if (!childRoles.isEmpty()) {
+            for (Role childRole : childRoles) {
+                // 递归调用以构建子节点的树
+                children.add(buildTree(childRole, roleList));
+            }
+            vo.setChildren(children); // 设置子节点列表
+            vo.setHasChildren(true);
+        } else {
+            vo.setHasChildren(false);
+        }
+
+        R<List<User>> listR = userSearchClient.listByRole(String.valueOf(role.getId()));
+        List<User> userList = listR.getData();
+        for (User user : userList) {
+            // 创建一个 User 类型的 NodeVO
+            NodeVO userNode = new NodeVO();
+            userNode.setId(role.getId()+"+"+user.getId());
+            userNode.setTitle(user.getRealName()); // 假设 User 有一个 username 属性
+            userNode.setType("User"); // 设置类型为 User
+            // 添加到 Role 节点的 children 列表中
+            vo.getChildren().add(userNode);
+        }
+        return vo;
+    }
+}
