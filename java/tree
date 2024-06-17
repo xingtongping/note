@@ -59,3 +59,13 @@
         return vo;
     }
 }
+
+
+查找所有层级角色列表
+获取父节点
+buildTree
+获取子角色roleList
+for (Role childRole : childRoles) {
+    // 递归调用以构建子节点的树
+    children.add(buildTree(childRole, roleList));
+}
