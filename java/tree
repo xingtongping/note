@@ -69,3 +69,53 @@ for (Role childRole : childRoles) {
     // 递归调用以构建子节点的树
     children.add(buildTree(childRole, roleList));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@Override
+public List<MenuVo> queryMenuTree() {
+    Wrapper queryObj = new QueryWrapper<>().orderByAsc("level","sort");
+    List<Menu> allMenu = super.list(queryObj);
+    // 0L：表示根节点的父ID
+    List<MenuVo> resultList = transferMenuVo(allMenu, 0L);
+    return resultList;
+}
+
+
+/**
+ * 封装菜单视图
+ * @param allMenu
+ * @param parentId
+ * @return
+ */
+private List<MenuVo> transferMenuVo(List<Menu> allMenu, Long parentId){
+    List<MenuVo> resultList = new ArrayList<>();
+    if(!CollectionUtils.isEmpty(allMenu)){
+        for (Menu source : allMenu) {
+            if(parentId.longValue() == source.getParentId().longValue()){
+                MenuVo menuVo = new MenuVo();
+                BeanUtils.copyProperties(source, menuVo);
+                //递归查询子菜单，并封装信息
+                List<MenuVo> childList = transferMenuVo(allMenu, source.getId());
+                if(!CollectionUtils.isEmpty(childList)){
+                    menuVo.setChildMenu(childList);
+                }
+                resultList.add(menuVo);
+            }
+        }
+    }
+    return resultList;
+}
+
