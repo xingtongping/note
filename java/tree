@@ -119,3 +119,14 @@ private List<MenuVo> transferMenuVo(List<Menu> allMenu, Long parentId){
     return resultList;
 }
 
+//逻辑描述
+1、获取所有菜单
+2、传入所有菜单和parentId作为递归方法参数
+3、通过parentId过滤每个菜单的子菜单列表，重复这个操作
+1 
+   1-1
+      1-1-1
+      1-1-2
+   1-2
+通过1过滤出1-1和1-2
+通过1-1过滤出1-1-1和1-1-2
